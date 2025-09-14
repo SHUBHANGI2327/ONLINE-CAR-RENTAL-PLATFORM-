@@ -1,0 +1,125 @@
+# car_rental.py
+
+from datetime import datetime
+
+class CarRental:
+    def __init__(self, stock=0):
+        self.stock = stock
+
+    def display_available_cars(self):
+        print(f"\nAVAILABLE CARS: {self.stock}")
+
+    def rent_car(self, num_of_cars, rental_type):
+        if num_of_cars <= 0:
+            print("Number of cars should be greater than zero.")
+            return None
+        elif num_of_cars > self.stock:
+            print(f"Only {self.stock} car(s) available.")
+            return None
+        else:
+            self.stock -= num_of_cars
+            rental_time = datetime.now()
+            print(f"\nRENTED {num_of_cars} CAR(S) ON {['HOURLY', 'DAILY', 'WEEKLY'][rental_type - 1]} BASIS")
+            return rental_time
+
+    def return_car(self, customer):
+        if not all([customer.rental_time, customer.rental_basis, customer.cars]):
+            print("Invalid return data.")
+            return None
+
+        now = datetime.now()
+        rental_period = now - customer.rental_time
+
+        if customer.rental_basis == 1:  # Hourly
+            hours = rental_period.total_seconds() / 3600
+            bill = round(hours) * 10 * customer.cars
+        elif customer.rental_basis == 2:  # Daily
+            bill = rental_period.days * 50 * customer.cars
+        elif customer.rental_basis == 3:  # Weekly
+            weeks = rental_period.days / 7
+            bill = round(weeks) * 150 * customer.cars
+        else:
+            bill = 0
+
+        self.stock += customer.cars
+        print(f"\nRETURNED {customer.cars} CAR(S). TOTAL BILL: ₹{bill}")
+        customer.reset()
+        return bill
+
+class Customer:
+    def __init__(self):
+        self.cars = 0
+        self.rental_basis = 0
+        self.rental_time = None
+
+    def request_car(self):
+        try:
+            car = int(input("How many cars would you like to rent? "))
+            if car <= 0:
+                print("Number must be greater than 0.")
+                return -1
+            self.cars = car
+            return self.cars
+        except ValueError:
+            print("Invalid input. Please enter an integer.")
+            return -1
+
+    def return_car(self):
+        if self.rental_time and self.rental_basis and self.cars:
+            return self.rental_time, self.rental_basis, self.cars
+        else:
+            return 0, 0, 0
+
+    def reset(self):
+        self.rental_time = None
+        self.rental_basis = 0
+        self.cars = 0
+
+from car_rental import CarRental, Customer
+
+
+
+
+
+#ipnyb file (main)
+def main():
+    rental_shop = CarRental(100)
+    customer = Customer()
+
+    while True:
+        print("""\n********* WELCOME TO CAR RENTAL SHOP *********
+1. Display available cars
+2. Request a car on hourly basis (₹10/hour)
+3. Request a car on daily basis (₹50/day)
+4. Request a car on weekly basis (₹150/week)
+5. Return a car
+6. Exit
+""")
+
+        try:
+            choice = int(input("Enter your choice (1-6): "))
+        except ValueError:
+            print("Invalid input. Please enter a number between 1 and 6.")
+            continue
+
+        if choice == 1:
+            rental_shop.display_available_cars()
+
+        elif choice in [2, 3, 4]:
+            cars = customer.request_car()
+            if cars > 0:
+                customer.rental_time = rental_shop.rent_car(cars, choice - 1)
+                customer.rental_basis = choice - 1
+
+        elif choice == 5:
+            rental_shop.return_car(customer)
+
+        elif choice == 6:
+            print("Thank you for using our car rental system. Goodbye!")
+            break
+
+        else:
+            print("Invalid choice. Please select from 1 to 6.")
+
+if __name__ == "__main__":
+    main()
